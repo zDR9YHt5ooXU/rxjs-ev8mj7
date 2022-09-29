@@ -35,3 +35,25 @@ const getObservable = (team: Observable<string>): Observable<Dataset> => {
     })
   );
 };
+
+const getObservableCacheInput = (
+  team: Observable<string>
+): Observable<Dataset> => {
+  const obsCache: Map<Observable<string>, Observable<Dataset>> = new Map();
+  let cache = obsCache.get(team);
+  if (cache) {
+    return cache;
+  }
+  cache = team.pipe(
+    switchMap((teamName) => {
+      return defer(() => of(Scores[teamName])).pipe(
+        map((score) => {
+          return { score };
+        })
+      );
+    }),
+    shareReplay({ bufferSize: 1, refCount: true })
+  );
+  obsCache.set(team, cache);
+  return cache;
+};
